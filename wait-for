@@ -49,7 +49,7 @@ USAGE
 
 wait_for() {
   case "$PROTOCOL" in
-    tcp)
+    tcp|udp)
       if ! command -v nc >/dev/null; then
         echoerr 'nc command is missing!'
         exit 1
@@ -69,6 +69,9 @@ wait_for() {
     case "$PROTOCOL" in
       tcp) 
         nc -w 1 -z "$HOST" "$PORT" > /dev/null 2>&1
+        ;;
+      udp)
+        nc -vnzu "$HOST" "$PORT" > /dev/null 2>&1
         ;;
       http)
         wget --timeout=1 -q "$HOST" -O /dev/null > /dev/null 2>&1 
@@ -111,6 +114,10 @@ while :; do
     HOST="$1"
     PROTOCOL="http"
     shift 1
+    ;;
+    -p | --protocol)
+    PROTOCOL="$2"
+    shift 2
     ;;
     *:* )
     HOST=$(printf "%s\n" "$1"| cut -d : -f 1)
@@ -174,7 +181,7 @@ if ! [ "$TIMEOUT" -ge 0 ] 2>/dev/null; then
 fi
 
 case "$PROTOCOL" in
-  tcp)
+  tcp|udp)
     if [ "$HOST" = "" ] || [ "$PORT" = "" ]; then
       echoerr "Error: you need to provide a host and port to test."
       usage 2
